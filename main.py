@@ -1,5 +1,4 @@
-# main.py
-import sys, argparse, lexer
+import argparse, lexer
 
 ap = argparse.ArgumentParser(description="Analisador léxico UaiC++")
 ap.add_argument("arquivo", help="caminho do código-fonte UaiC++")

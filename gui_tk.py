@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 gui_tk.py – interface Tkinter para o analisador léxico UaiC++
-Autor: (seu nome)
+Autor: Alex Martins e João Lucio
 """
 
 import tkinter as tk
