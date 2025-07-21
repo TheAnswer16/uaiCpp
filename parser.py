@@ -77,7 +77,7 @@ class Parser:
         self._expect("PONTO_E_VIRGULA", "ponto e vírgula ';' ao final da declaração")
 
     def _condicional(self):
-        self._match("UAI")
+        self._advance()
         self._expect("ABRE_PAR", "parêntese de abertura '(' após 'uai'")
         self._expr()
         self._expect("FECHA_PAR", "parêntese de fechamento ')' após a condição")
@@ -86,10 +86,27 @@ class Parser:
             self._statement()
         self._expect("FECHA_BLOCO", "fim de bloco 'cabo'")
 
+        while self.current.type == "UAI_SO":
+            self._advance()
+            self._expect("ABRE_PAR", "parêntese de abertura '(' após 'uai'")
+            self._expr()
+            self._expect("FECHA_PAR", "parêntese de fechamento ')' após a condição")
+            self._expect("ABRE_BLOCO", "início de bloco 'chegô'")
+            while self.current.type not in ("FECHA_BLOCO", "EOF"):
+                self._statement()
+            self._expect("FECHA_BLOCO", "fim de bloco 'cabo'")
+
+        if self.current.type == "UAI_NADA":
+            self._advance()
+            self._expect("ABRE_BLOCO", "início de bloco 'chegô'")
+            while self.current.type not in ("FECHA_BLOCO", "EOF"):
+                self._statement()
+            self._expect("FECHA_BLOCO", "fim de bloco 'cabo'")
+
     def _expr(self):
         if self.current.type in ("IDENT", "NUMERO", "STRING", "CHAR", "VERDADE", "MINTIRA"):
             self._advance()
-            if self.current.type in ("OP_MAT", "OP_REL", "OP_LOGICO"):
+            while self.current.type in ("OP_MAT", "OP_REL", "TAMEM", "OU"):
                 self._advance()
                 self._expr()
         elif self._match("ABRE_PAR"):
