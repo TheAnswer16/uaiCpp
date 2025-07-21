@@ -25,13 +25,16 @@ class Parser:
             return True
         return False
 
-    def _expect(self, expected_type, message):
+    def _expect(self, expected_type, description):
         if not self._match(expected_type):
-            self._error(f"Esperado '{expected_type}', mas encontrado '{self.current.lexeme}'")
+            self._error(
+                f"Esperado {description} (token '{expected_type}'), "
+                f"mas encontrado '{self.current.lexeme}'"
+            )
 
     def _error(self, msg):
         self.errors.append(
-            f"Erro sintático na linha {self.current.line}, coluna {self.current.column}: {msg}"
+            f"[Linha {self.current.line}, Coluna {self.current.column}] Erro sintático: {msg}"
         )
         self._advance()  # Tenta seguir adiante
 
@@ -46,43 +49,44 @@ class Parser:
         elif self.current.type == "MOSTRA_TREM":
             self._match("MOSTRA_TREM")
             self._expr()
-            self._expect("PONTO_E_VIRGULA", "';' ao final do comando mostra_trem")
+            self._expect("PONTO_E_VIRGULA", "ponto e vírgula ';' ao final do comando mostra_trem")
         elif self.current.type == "ESCUTA_TREM":
             self._match("ESCUTA_TREM")
             self._expect("IDENT", "identificador após escuta_trem")
-            self._expect("PONTO_E_VIRGULA", "';' ao final de escuta_trem")
-        elif self.current.type == "COND_SE":
+            self._expect("PONTO_E_VIRGULA", "ponto e vírgula ';' ao final do comando escuta_trem")
+        elif self.current.type == "UAI":
             self._condicional()
         elif self.current.type == "VORTA":
             self._match("VORTA")
             self._expr()
-            self._expect("PONTO_E_VIRGULA", "';' após vorta")
+            self._expect("PONTO_E_VIRGULA", "ponto e vírgula ';' após o comando vorta")
         else:
-            self._error(f"Comando inesperado: {self.current.lexeme}")
+            self._error(f"Comando inesperado: '{self.current.lexeme}'")
 
     def _decl(self):
         self._match("TREM")
         if self.current.type in ("INT", "REAL", "LOGICO", "TEXTO", "LISTA", "DATA_HORA"):
             self._advance()
         else:
-            self._error("Tipo de dado inválido na declaração")
+            self._error(
+                f"Tipo inválido na declaração. Esperado: int, real, lógico, texto, lista ou data_hora; encontrado: '{self.current.lexeme}'"
+            )
         self._expect("IDENT", "identificador da variável")
         if self._match("OP_ATRIB"):
             self._expr()
-        self._expect("PONTO_E_VIRGULA", "';' ao final da declaração")
+        self._expect("PONTO_E_VIRGULA", "ponto e vírgula ';' ao final da declaração")
 
     def _condicional(self):
-        self._advance()  # uai
-        self._expect("ABRE_PAR", "'(' após uai")
+        self._match("UAI")
+        self._expect("ABRE_PAR", "parêntese de abertura '(' após 'uai'")
         self._expr()
-        self._expect("FECHA_PAR", "')' após condição")
-        self._expect("ABRE_BLOCO", "chego para abrir bloco")
+        self._expect("FECHA_PAR", "parêntese de fechamento ')' após a condição")
+        self._expect("ABRE_BLOCO", "início de bloco 'chegô'")
         while self.current.type not in ("FECHA_BLOCO", "EOF"):
             self._statement()
-        self._expect("FECHA_BLOCO", "cabo para fechar bloco")
+        self._expect("FECHA_BLOCO", "fim de bloco 'cabo'")
 
     def _expr(self):
-        # Expressão simples: IDENT ou NUMERO (ou agrupamento com parênteses)
         if self.current.type in ("IDENT", "NUMERO", "STRING", "CHAR", "VERDADE", "MINTIRA"):
             self._advance()
             if self.current.type in ("OP_MAT", "OP_REL", "OP_LOGICO"):
@@ -90,6 +94,8 @@ class Parser:
                 self._expr()
         elif self._match("ABRE_PAR"):
             self._expr()
-            self._expect("FECHA_PAR", "')' após expressão")
+            self._expect("FECHA_PAR", "parêntese de fechamento ')' para encerrar expressão")
         else:
-            self._error(f"Expressão inválida: {self.current.lexeme}")
+            self._error(
+                f"Expressão inválida: '{self.current.lexeme}'. Esperado identificador, número ou valor válido"
+            )
